@@ -27,7 +27,7 @@ import net.mikej.bots.tricksy.services.ImageService;
 
 public class InkLookupCommand extends CommandHandler {
 
-    private static String inkPattern = "\\[\\[([^\\]]+)\\]\\]"; // "\\!\\{([^\\}]+)\\}"; // 
+    private static String inkPattern = "\\{([^\\}]+)\\}"; //  "\\[\\[([^\\]]+)\\]\\]"; // 
 
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
