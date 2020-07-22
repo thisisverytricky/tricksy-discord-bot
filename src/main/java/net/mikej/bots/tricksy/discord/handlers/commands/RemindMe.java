@@ -105,7 +105,7 @@ public class RemindMe extends CommandHandler {
 
     @Override
     public String getHelp() {
-        String msg = "Currently, the bot supposed the following commands:\n";
+        String msg = "Currently, the bot supports the following commands:\n";
         for (ReminderThreshold threshold : reminderThresholds)
             msg += String.format("\n`%s`", threshold.getHelpText());
         return msg;
