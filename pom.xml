@@ -23,6 +23,7 @@
     <jackson.version>2.11.1</jackson.version>
     <okhttp.version>4.8.0</okhttp.version>
     <retrofit.jackson.version>2.9.0</retrofit.jackson.version>
+    <joda.version>2.10.6</joda.version>
   </properties>
 
   <dependencies>
@@ -87,41 +88,48 @@
       <artifactId>kotlin-stdlib</artifactId>
       <version>1.3.70</version>
     </dependency>
-    <!-- https://mvnrepository.com/artifact/com.squareup.retrofit2/converter-gson -->
     <dependency>
       <groupId>com.squareup.retrofit2</groupId>
       <artifactId>converter-gson</artifactId>
       <version>2.9.0</version>
+    </dependency>
+    <dependency>
+      <groupId>joda-time</groupId>
+      <artifactId>joda-time</artifactId>
+      <version>${joda.version}</version>
     </dependency>
   </dependencies>
   <build>
     <plugins>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
-          <artifactId>appassembler-maven-plugin</artifactId>
-          <version>1.1.1</version>
-          <configuration>
-            <assembleDirectory>target</assembleDirectory>
-            <programs>
-                <program>
-                    <mainClass>net.mikej.bots.tricksy.main.BeepBoopMotherfucker</mainClass>
-                    <name>worker</name>
-                </program>
-                <program>
-                    <mainClass>net.mikej.bots.tricksy.main.BeepBoopMotherfucker</mainClass>
-                    <name>oneoff</name>
-                </program>
-            </programs>
-          </configuration>
-          <executions>
-              <execution>
-                  <phase>package</phase><goals><goal>assemble</goal></goals>
-              </execution>
-          </executions>
+        <artifactId>appassembler-maven-plugin</artifactId>
+        <version>1.1.1</version>
+        <configuration>
+          <assembleDirectory>target</assembleDirectory>
+          <programs>
+            <program>
+              <mainClass>net.mikej.bots.tricksy.main.BeepBoopMotherfucker</mainClass>
+              <name>worker</name>
+            </program>
+            <program>
+              <mainClass>net.mikej.bots.tricksy.main.BeepBoopMotherfucker</mainClass>
+              <name>oneoff</name>
+            </program>
+          </programs>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>assemble</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
-<!-- 
+  <!-- 
   <build>
     <pluginManagement>
       <plugins>

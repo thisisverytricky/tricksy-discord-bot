@@ -58,5 +58,10 @@ public class SilenceMentions extends CommandHandler {
     public boolean isPublic() {
         return true;
     }
+
+    @Override
+    public int priority() {
+        return 1;
+    }
     
 }
