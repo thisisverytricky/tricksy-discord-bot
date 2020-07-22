@@ -16,7 +16,7 @@ public class BeepBoopMotherfucker {
     public static void main(String[] args) throws LoginException, InstantiationException, IllegalAccessException {
         ImgurContainer.init(System.getenv("imgur_token"));
         MongoContainer.init(
-                String.format("mongodb+srv://%s:%s@cluster-inky-bot-yiios.mongodb.net/%s?retryWrites=true&w=majority",
+                String.format("mongodb+srv://%s:%s@cluster-inky-bot-yiios.mongodb.net/%s?retryWrites=true&w=majority&readPreference=primaryPreferred",
                     System.getenv("mongodb_username"),
                     System.getenv("mongodb_password"),
                     System.getenv("mongodb_collection")));
