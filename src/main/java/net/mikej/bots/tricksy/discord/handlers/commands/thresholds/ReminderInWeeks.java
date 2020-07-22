@@ -12,7 +12,7 @@ public class ReminderInWeeks extends ReminderThreshold {
     private Pattern pattern;
 
     public ReminderInWeeks() {
-        pattern = Pattern.compile("!remindme in (\\d*\\.\\d+|\\d+\\.\\d*) weeks? (.+)");
+        pattern = Pattern.compile("!remindme in (\\d+|\\d*\\.\\d+|\\d+\\.\\d*) weeks? (.+)");
     }
 
     @Override

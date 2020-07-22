@@ -12,7 +12,7 @@ public class ReminderInMinutes extends ReminderThreshold {
     private Pattern pattern;
 
     public ReminderInMinutes() {
-        pattern = Pattern.compile("!remindme in (\\d*\\.\\d+|\\d+\\.\\d*) minutes? (.+)");
+        pattern = Pattern.compile("!remindme in (\\d+|\\d*\\.\\d+|\\d+\\.\\d*) minutes? (.+)");
     }
 
     @Override
