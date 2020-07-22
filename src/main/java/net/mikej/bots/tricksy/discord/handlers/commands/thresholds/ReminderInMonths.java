@@ -12,7 +12,7 @@ public class ReminderInMonths extends ReminderThreshold {
     private Pattern pattern;
 
     public ReminderInMonths() {
-        pattern = Pattern.compile("!remindme in (\\d*\\.\\d+|\\d+\\.\\d*) months? (.+)");
+        pattern = Pattern.compile("!remindme in (\\d+|\\d*\\.\\d+|\\d+\\.\\d*) months? (.+)");
     }
 
     @Override
