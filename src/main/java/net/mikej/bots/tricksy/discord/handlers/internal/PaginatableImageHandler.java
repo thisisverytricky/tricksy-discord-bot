@@ -66,7 +66,7 @@ public class PaginatableImageHandler extends ListenerAdapter {
         final User reactionUser = event.getUser();
 
         pimg.getMessage().removeReaction(emote, reactionUser).complete();
-        pimg.getMessage().editMessage(pimg.getEmbedBuilder().setImage(pimg.getCurrentImage()).build()).complete();
+        pimg.getMessage().editMessage(pimg.getEmbedBuilder().setFooter(String.format("%s of %s images", pimg.getIndex()+1, pimg.getImages().getSize())).setImage(pimg.getCurrentImage()).build()).complete();
         getCollection().updateOne(eq("_id", pimg.getId()), set("index", pimg.getIndex()));
     }
 
