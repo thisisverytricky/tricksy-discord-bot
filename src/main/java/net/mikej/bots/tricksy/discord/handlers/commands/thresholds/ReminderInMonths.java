@@ -8,11 +8,11 @@ import org.joda.time.DateTime;
 import net.mikej.bots.tricksy.discord.handlers.commands.RemindMe.Reminder;
 import net.mikej.bots.tricksy.discord.handlers.commands.RemindMe.ReminderThreshold;
 
-public class ReminderInSeconds extends ReminderThreshold {
+public class ReminderInMonths extends ReminderThreshold {
     private Pattern pattern;
 
-    public ReminderInSeconds() {
-        pattern = Pattern.compile("!remindme in (\\d+) seconds? (.+)");
+    public ReminderInMonths() {
+        pattern = Pattern.compile("!remindme in (\\d*\\.\\d+|\\d+\\.\\d*) months? (.+)");
     }
 
     @Override
@@ -22,7 +22,7 @@ public class ReminderInSeconds extends ReminderThreshold {
 
     @Override
     public String getHelpText() {
-        return "!remindme in 10 seconds <MESSAGE>";
+        return "!remindme in 10 months <MESSAGE>";
     }
 
     @Override
@@ -32,6 +32,6 @@ public class ReminderInSeconds extends ReminderThreshold {
             return null;
         int time = Integer.parseInt(m.group(1));
         String reminderMessage = m.group(2);
-        return new Reminder(reminderMessage, DateTime.now().plusSeconds(time).toInstant());
+        return new Reminder(reminderMessage, DateTime.now().plusMonths(time).toInstant());
     }
 }

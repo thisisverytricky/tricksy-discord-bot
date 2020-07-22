@@ -35,29 +35,40 @@ public class RemindMe extends CommandHandler {
             reminderThresholds.add(threshold);
         }
 
-        ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
         for (ReminderSaved reminder : getCollection().find()) {
-            final String message = reminder.getMessage();
-            final String messageUrl = reminder.getMessageUrl();
-            final User user = DiscordClient.getClient().getUserById(reminder.getUserId());
-            
-            service.schedule(new Runnable() {
-
-                @Override
-                public void run() {
-                    user.openPrivateChannel().queue(chan -> {
-                        EmbedBuilder eb = new EmbedBuilder();
-                        eb.setTitle("Here is your scheduled reminder!");
-                        eb.setDescription(
-                                message + "\n\n" + "[Message that scheduled me](" + messageUrl + ")");
-                        chan.sendMessage(eb.build()).queue();
-                        
-                        getCollection().findOneAndDelete(eq("messageUrl", messageUrl));
-                    });
-                }
-                
-            }, Seconds.secondsBetween(Instant.now(), reminder.instant()).getSeconds(), TimeUnit.SECONDS);
+            schedule(reminder);
         }
+    }
+
+    private void schedule(ReminderSaved reminder) {
+        ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
+
+        final String message = reminder.getMessage();
+        final String messageUrl = reminder.getMessageUrl();
+        final User user = DiscordClient.getClient().getUserById(reminder.getUserId());
+        
+        service.schedule(new Runnable() {
+
+            @Override
+            public void run() {
+                user.openPrivateChannel().queue(chan -> {
+                    EmbedBuilder eb = new EmbedBuilder();
+                    eb.setTitle("Here is your scheduled reminder!");
+                    eb.setDescription(
+                            message + "\n\n" + "[Message that scheduled me](" + messageUrl + ")");
+                    chan.sendMessage(eb.build()).queue();
+                    
+                    getCollection().findOneAndDelete(eq("messageUrl", messageUrl));
+                });
+            }
+            
+        }, Seconds.secondsBetween(Instant.now(), reminder.instant()).getSeconds(), TimeUnit.SECONDS);
+    }
+
+    private ReminderSaved save(Reminder reminder, User user, String messageUrl) {
+        ReminderSaved rs = new ReminderSaved(reminder.getReminderInstant(), user.getId(), messageUrl, reminder.getMessage());
+        getCollection().insertOne(rs);
+        return rs;
     }
 
     @Override
@@ -68,14 +79,14 @@ public class RemindMe extends CommandHandler {
         for (ReminderThreshold rt : reminderThresholds) {
             if (rt.matches(event.getMessage().getContentRaw())) {
                 Reminder reminder = rt.getReminder(event.getMessage().getContentRaw());
-                final ReminderSaved rs = rt.schedule(reminder, event.getAuthor(), event.getMessage().getJumpUrl());
+                schedule(save(reminder, event.getAuthor(), event.getMessage().getJumpUrl()));
+                
                 event.getChannel().sendMessage(String.format("Alright! I will remind you `%s` @ `%s`", reminder.getMessage(), reminder.getReminderInstant())).queue();
-                getCollection().insertOne(rs);
                 return;
             }
         }
 
-        event.getChannel().sendMessage("Invalid remind me conmmand provided! Type `!help` for help.").queue();
+        event.getChannel().sendMessage("Invalid remind me command provided! Type `!help` for help.").queue();
     }
 
     private MongoCollection<ReminderSaved> getCollection() {
@@ -115,7 +126,6 @@ public class RemindMe extends CommandHandler {
         public abstract boolean matches(String message);
         public abstract String getHelpText();
         public abstract Reminder getReminder(String message);
-        public abstract ReminderSaved schedule(Reminder reminder, User event, String messageUrl);
     }
 
     public static class Reminder
