@@ -30,8 +30,8 @@ public class ReminderInDays extends ReminderThreshold {
         Matcher m = pattern.matcher(message);
         if (!m.find())
             return null;
-        int time = Integer.parseInt(m.group(1));
+        double time = Double.parseDouble(m.group(1));
         String reminderMessage = m.group(2);
-        return new Reminder(reminderMessage, DateTime.now().plusDays(time).toInstant());
+        return new Reminder(reminderMessage, DateTime.now().plusSeconds((int)(time * 60 * 60 * 24)).toInstant());
     }
 }
