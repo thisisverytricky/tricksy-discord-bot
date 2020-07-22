@@ -7,4 +7,5 @@ public abstract class CommandHandler extends ListenerAdapter {
     public abstract String getShortHelp();
     public abstract String getHelp();
     public abstract boolean isPublic();
+    public abstract int priority();
 }

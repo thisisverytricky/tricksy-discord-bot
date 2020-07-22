@@ -109,4 +109,9 @@ public class InkLookupCommand extends CommandHandler {
     public boolean isPublic() {
         return true;
     }
+
+    @Override
+    public int priority() {
+        return 0;
+    }
 }

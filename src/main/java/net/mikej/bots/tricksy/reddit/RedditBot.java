@@ -48,7 +48,9 @@ public class RedditBot implements Runnable {
         UserAgent userAgent = new UserAgent("bot", "net.mikej.bots.tricksy", "1.0.0", "thisisverytricky");
         _client = OAuthHelper.automatic(new OkHttpNetworkAdapter(userAgent), oauthCreds);
 
-        penSwapChannels = DiscordClient.getClient().getTextChannelsByName("pen-swap", true);
+        if (DiscordClient.getClient() != null)
+            penSwapChannels = DiscordClient.getClient().getTextChannelsByName("pen-swap", true);
+        else penSwapChannels = new ArrayList<>();
 
         init();
         ScheduledExecutorService schedular = Executors.newScheduledThreadPool(1);
