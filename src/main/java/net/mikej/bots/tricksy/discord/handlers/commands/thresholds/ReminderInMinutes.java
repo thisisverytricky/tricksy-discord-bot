@@ -46,7 +46,7 @@ public class ReminderInMinutes extends ReminderThreshold {
             return null;
         int time = Integer.parseInt(m.group(1));
         String reminderMessage = m.group(2);
-        return new Reminder(reminderMessage, DateTime.now().plusSeconds(time).toInstant());
+        return new Reminder(reminderMessage, DateTime.now().plusMinutes(time).toInstant());
     }
 
     @Override
