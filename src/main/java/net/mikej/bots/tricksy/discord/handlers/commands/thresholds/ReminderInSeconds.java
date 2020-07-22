@@ -6,14 +6,21 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.mongodb.client.MongoCollection;
+
 import org.joda.time.DateTime;
 import org.joda.time.Instant;
 import org.joda.time.Seconds;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.User;
+import net.mikej.bots.tricksy.data.MongoContainer;
 import net.mikej.bots.tricksy.discord.handlers.commands.RemindMe.Reminder;
+import net.mikej.bots.tricksy.discord.handlers.commands.RemindMe.ReminderSaved;
 import net.mikej.bots.tricksy.discord.handlers.commands.RemindMe.ReminderThreshold;
+
+import static com.mongodb.client.model.Filters.*;
+
 
 public class ReminderInSeconds extends ReminderThreshold {
     private Pattern pattern;
@@ -43,7 +50,7 @@ public class ReminderInSeconds extends ReminderThreshold {
     }
 
     @Override
-    public void schedule(final Reminder reminder, final User user, final String messageUrl) {
+    public ReminderSaved schedule(final Reminder reminder, final User user, final String messageUrl) {
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
         int seconds = Seconds.secondsBetween(Instant.now(), reminder.getReminderInstant()).getSeconds();
         scheduler.schedule(new Runnable() {
@@ -53,11 +60,19 @@ public class ReminderInSeconds extends ReminderThreshold {
                 user.openPrivateChannel().queue(chan -> {
                     EmbedBuilder eb = new EmbedBuilder();
                     eb.setTitle("Here is your scheduled reminder!");
-                    eb.setDescription(reminder.getMessage() + "\n\n" + "[Message that scheduled me](" + messageUrl + ")");
+                    eb.setDescription(
+                            reminder.getMessage() + "\n\n" + "[Message that scheduled me](" + messageUrl + ")");
                     chan.sendMessage(eb.build()).queue();
+                    
+                    getCollection().findOneAndDelete(eq("messageUrl", messageUrl));
                 });
             }
 
         }, seconds, TimeUnit.SECONDS);
+        return new ReminderSaved(reminder.getReminderInstant(), user.getId(), messageUrl, reminder.getMessage());
+    }
+
+    private MongoCollection<ReminderSaved> getCollection() {
+        return MongoContainer.getClient().getDatabase("discord-bot").getCollection("reminders", ReminderSaved.class);
     }
 }
