@@ -9,11 +9,11 @@ import org.joda.time.DateTimeZone;
 import net.mikej.bots.tricksy.discord.handlers.commands.RemindMe.Reminder;
 import net.mikej.bots.tricksy.discord.handlers.commands.RemindMe.ReminderThreshold;
 
-public class ReminderOnDay extends ReminderThreshold {
+public class ReminderOnDayAtTime extends ReminderThreshold {
     private Pattern pattern;
 
-    public ReminderOnDay() {
-        pattern = Pattern.compile("!remindme on (\\d{4})-(\\d{2})-(\\d{2}) (.+)");
+    public ReminderOnDayAtTime() {
+        pattern = Pattern.compile("!remindme on (\\d{4})-(\\d{2})-(\\d{2}) at (\\d{2}):(\\d{2}) UTC(-|\\+)(\\d+) (.+)");
     }
 
     @Override
@@ -23,7 +23,7 @@ public class ReminderOnDay extends ReminderThreshold {
 
     @Override
     public String getHelpText() {
-        return "!remindme on 2020-01-01 <MESSAGE>";
+        return "!remindme on 2020-01-01 at 20:00 UTC-5 <MESSAGE>";
     }
 
     @Override
@@ -31,13 +31,16 @@ public class ReminderOnDay extends ReminderThreshold {
         Matcher m = pattern.matcher(message);
         if (!m.find())
             return null;
-        DateTime date= new DateTime(Integer.parseInt(m.group(1)), Integer.parseInt(m.group(2)), Integer.parseInt(m.group(3)), 0, 0, DateTimeZone.UTC);
-        String reminderMessage = m.group(4);
+        DateTime date = new DateTime(Integer.parseInt(m.group(1)), Integer.parseInt(m.group(2)), Integer.parseInt(m.group(3)), Integer.parseInt(m.group(4)), Integer.parseInt(m.group(5)), DateTimeZone.UTC);
+        int offset = Integer.parseInt(m.group(7));
+        if (m.group(6).equals("+")) offset *= -1;
+        date = date.plusHours(offset);
+        String reminderMessage = m.group(8);
         return new Reminder(reminderMessage, date.toInstant());
     }
 
     @Override
     public int priority() {
-        return 6;
+        return 7;
     }
 }
