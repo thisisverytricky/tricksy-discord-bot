@@ -80,7 +80,6 @@ public class RemindMe extends CommandHandler {
             if (rt.matches(event.getMessage().getContentRaw())) {
                 Reminder reminder = rt.getReminder(event.getMessage().getContentRaw());
                 schedule(save(reminder, event.getAuthor(), event.getMessage().getJumpUrl()));
-                
                 event.getChannel().sendMessage(String.format("Alright! I will remind you `%s` @ `%s`", reminder.getMessage(), reminder.getReminderInstant())).queue();
                 return;
             }
