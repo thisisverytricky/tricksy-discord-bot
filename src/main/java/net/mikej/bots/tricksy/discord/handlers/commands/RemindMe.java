@@ -13,6 +13,7 @@ import com.mongodb.client.MongoCollection;
 import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonIgnore;
 import org.bson.types.ObjectId;
+import org.joda.time.DateTime;
 import org.joda.time.Instant;
 import org.joda.time.Seconds;
 import org.reflections.Reflections;
@@ -86,9 +87,15 @@ public class RemindMe extends CommandHandler {
         if (!event.getMessage().getContentRaw().startsWith("!remindme "))
             return;
 
+        String message = event.getMessage().getContentRaw();
+        if (message.equals("!remindme list")) {
+                listReminders(event);
+                return;
+        }
+
         for (int i = reminderThresholds.size() - 1; i >= 0; i--) {
             ReminderThreshold rt = reminderThresholds.get(i);
-            if (rt.matches(event.getMessage().getContentRaw())) {
+            if (rt.matches(message)) {
                 Reminder reminder = rt.getReminder(event.getMessage().getContentRaw());
                 schedule(save(reminder, event.getAuthor(), event.getMessage().getJumpUrl()));
                 event.getChannel().sendMessage(String.format("Alright! I will remind you `%s` @ `%s`",
@@ -98,6 +105,20 @@ public class RemindMe extends CommandHandler {
         }
 
         event.getChannel().sendMessage("Invalid remind me command provided! Type `!help` for help.").queue();
+    }
+
+    private void listReminders(MessageReceivedEvent event) {
+        String reminderList = "";
+        int i = 1;
+        for (ReminderSaved rm : getCollection().find(eq("userId", event.getAuthor().getId()))) {
+            reminderList += String.format("%s: `%s` - scheduled for `%s`\n\n", i++, rm.getMessage(), new DateTime(rm.getInstant()));
+        }
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setTitle("Your scheduled reminders:");
+        eb.setDescription(reminderList);
+        event.getAuthor().openPrivateChannel().queue(chan -> {
+            chan.sendMessage(eb.build()).queue();
+        });
     }
 
     private MongoCollection<ReminderSaved> getCollection() {
