@@ -24,6 +24,7 @@ public class BeepBoopMotherfucker {
         try {
             DiscordClient.getClient().awaitReady();
             RedditBot.init(System.getenv("reddit_username"), System.getenv("reddit_password"), System.getenv("reddit_client_id"), System.getenv("reddit_client_secret"));
+            RedditBot.watchNewPosts("pen_swap");
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
