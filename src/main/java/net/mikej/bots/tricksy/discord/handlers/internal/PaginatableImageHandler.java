@@ -13,7 +13,6 @@ import org.bson.types.ObjectId;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.mikej.bots.tricksy.data.MongoContainer;
@@ -33,22 +32,6 @@ public class PaginatableImageHandler extends ListenerAdapter {
             trackedMessages.put(pi.getMessageId(), pi);
         }
     }
-    // @Override
-    // public void onReady(ReadyEvent event) {
-    //     for (PagableImage pi : getCollection().find()) {
-    //         try {
-    //         Message msg = DiscordClient.getClient().getGuildById(pi.getGuildId()).getTextChannelById(pi.getChannelId()).retrieveMessageById(pi.getMessageId()).complete();
-    //         EmbedBuilder eb = new EmbedBuilder(msg.getEmbeds().get(0));
-    //         pi.setEmbedBuilder(eb);
-    //         pi.setMessage(msg);
-    //         trackedMessages.put(pi.getMessageId(), pi);
-    //         } catch (net.dv8tion.jda.api.exceptions.ErrorResponseException ex) {
-    //             if (ex.getErrorCode() == 10008) {
-    //                 getCollection().findOneAndDelete(eq("_id", pi.getId()));
-    //             }
-    //         }
-    //     }
-    // }
 
     @Override
     public void onMessageReactionAdd(MessageReactionAddEvent event) {
@@ -70,7 +53,6 @@ public class PaginatableImageHandler extends ListenerAdapter {
 
         final User reactionUser = event.getUser();
 
-        // pimg.getMessage().removeReaction(emote, reactionUser).complete();
         DiscordClient.getClient().getGuildById(pimg.getGuildId()).getTextChannelById(pimg.getChannelId()).retrieveMessageById(pimg.getMessageId()).queue(msg -> {
             msg.removeReaction(emote, reactionUser).queue();
             EmbedBuilder eb = new EmbedBuilder(msg.getEmbeds().get(0));
@@ -79,8 +61,6 @@ public class PaginatableImageHandler extends ListenerAdapter {
             msg.editMessage(eb.build()).queue();
             getCollection().updateOne(eq("_id", pimg.getId()), set("index", pimg.getIndex()));
         });
-        // pimg.getMessage().editMessage(pimg.getEmbedBuilder().setFooter(String.format("%s of %s images", pimg.getIndex()+1, pimg.getImages().size())).setImage(pimg.getCurrentImage()).build()).complete();
-        // getCollection().updateOne(eq("_id", pimg.getId()), set("index", pimg.getIndex()));
     }
 
     public static void registerPagableMessage(EmbedBuilder embedBuilder, Message message, List<String> images) {
