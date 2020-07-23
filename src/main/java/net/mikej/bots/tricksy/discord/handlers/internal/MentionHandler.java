@@ -69,6 +69,7 @@ public class MentionHandler extends ListenerAdapter {
             pc.sendMessage(String.format("Your were mentioned while offline: %s", pm.getMessageUrl())).complete();
             getCollection().deleteOne(eq("_id", pm.getId()));
         });
+        pc.sendMessage("If you would like to stop receving mention notifications, just reply with !toggleMentions");
         pendingMentions.remove(event.getMember().getId());
     }
 
