@@ -34,4 +34,9 @@ public class ReminderInHours extends ReminderThreshold {
         String reminderMessage = m.group(2);
         return new Reminder(reminderMessage, DateTime.now().plusSeconds((int)(time * 60 * 60)).toInstant());
     }
+
+    @Override
+    public int priority() {
+        return 2;
+    }
 }

@@ -1,6 +1,8 @@
 package net.mikej.bots.tricksy.discord.handlers.commands;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -35,6 +37,13 @@ public class RemindMe extends CommandHandler {
             reminderThresholds.add(threshold);
         }
 
+        Collections.sort(reminderThresholds, new Comparator<ReminderThreshold>() {
+            @Override
+            public int compare(ReminderThreshold o1, ReminderThreshold o2) {
+                return o1.priority() - o2.priority();
+            }
+        });
+
         for (ReminderSaved reminder : getCollection().find()) {
             schedule(reminder);
         }
@@ -46,7 +55,7 @@ public class RemindMe extends CommandHandler {
         final String message = reminder.getMessage();
         final String messageUrl = reminder.getMessageUrl();
         final User user = DiscordClient.getClient().getUserById(reminder.getUserId());
-        
+
         service.schedule(new Runnable() {
 
             @Override
@@ -54,33 +63,36 @@ public class RemindMe extends CommandHandler {
                 user.openPrivateChannel().queue(chan -> {
                     EmbedBuilder eb = new EmbedBuilder();
                     eb.setTitle("Here is your scheduled reminder!");
-                    eb.setDescription(
-                            message + "\n\n" + "[Message that scheduled me](" + messageUrl + ")");
+                    eb.setDescription(message + "\n\n" + "[Message that scheduled me](" + messageUrl + ")");
                     chan.sendMessage(eb.build()).queue();
-                    
+
                     getCollection().findOneAndDelete(eq("messageUrl", messageUrl));
                 });
             }
-            
         }, Seconds.secondsBetween(Instant.now(), reminder.instant()).getSeconds(), TimeUnit.SECONDS);
     }
 
     private ReminderSaved save(Reminder reminder, User user, String messageUrl) {
-        ReminderSaved rs = new ReminderSaved(reminder.getReminderInstant(), user.getId(), messageUrl, reminder.getMessage());
+        ReminderSaved rs = new ReminderSaved(reminder.getReminderInstant(), user.getId(), messageUrl,
+                reminder.getMessage());
         getCollection().insertOne(rs);
         return rs;
     }
 
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
-        if (event.getAuthor().isBot()) return;
-        if (!event.getMessage().getContentRaw().startsWith("!remindme ")) return;
+        if (event.getAuthor().isBot())
+            return;
+        if (!event.getMessage().getContentRaw().startsWith("!remindme "))
+            return;
 
-        for (ReminderThreshold rt : reminderThresholds) {
+        for (int i = reminderThresholds.size() - 1; i >= 0; i--) {
+            ReminderThreshold rt = reminderThresholds.get(i);
             if (rt.matches(event.getMessage().getContentRaw())) {
                 Reminder reminder = rt.getReminder(event.getMessage().getContentRaw());
                 schedule(save(reminder, event.getAuthor(), event.getMessage().getJumpUrl()));
-                event.getChannel().sendMessage(String.format("Alright! I will remind you `%s` @ `%s`", reminder.getMessage(), reminder.getReminderInstant())).queue();
+                event.getChannel().sendMessage(String.format("Alright! I will remind you `%s` @ `%s`",
+                        reminder.getMessage(), reminder.getReminderInstant())).queue();
                 return;
             }
         }
@@ -119,16 +131,18 @@ public class RemindMe extends CommandHandler {
     public int priority() {
         return 3;
     }
-    
-    public abstract static class ReminderThreshold 
-    {
+
+    public abstract static class ReminderThreshold {
         public abstract boolean matches(String message);
+
         public abstract String getHelpText();
+
         public abstract Reminder getReminder(String message);
+
+        public abstract int priority();
     }
 
-    public static class Reminder
-    {
+    public static class Reminder {
         private final String message;
         private final Instant reminderInstant;
 
@@ -137,12 +151,16 @@ public class RemindMe extends CommandHandler {
             this.reminderInstant = reminderInstant;
         }
 
-        public String getMessage() { return message; }
-        public Instant getReminderInstant() { return reminderInstant; }
+        public String getMessage() {
+            return message;
+        }
+
+        public Instant getReminderInstant() {
+            return reminderInstant;
+        }
     }
 
-    public static class ReminderSaved
-    {
+    public static class ReminderSaved {
         @BsonId
         public ObjectId _id;
         public Instant instant;
@@ -150,7 +168,9 @@ public class RemindMe extends CommandHandler {
         private String messageUrl;
         private String message;
 
-        public ReminderSaved() {}
+        public ReminderSaved() {
+        }
+
         public ReminderSaved(Instant instant, String userId, String messageUrl, String message) {
             this.instant = instant;
             this.userId = userId;
@@ -158,26 +178,47 @@ public class RemindMe extends CommandHandler {
             this.message = message;
         }
 
-        public ObjectId get_id() { return _id; }
-        public long getInstant() { return instant.getMillis(); }
-        public String getUserId() { return userId; }
-        public String getMessageUrl() { return messageUrl; }
-        public String getMessage() { return message; }
+        public ObjectId get_id() {
+            return _id;
+        }
+
+        public long getInstant() {
+            return instant.getMillis();
+        }
+
+        public String getUserId() {
+            return userId;
+        }
+
+        public String getMessageUrl() {
+            return messageUrl;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
         @BsonIgnore
-        public Instant instant() { return instant; }
+        public Instant instant() {
+            return instant;
+        }
 
         public void set_id(ObjectId _id) {
             this._id = _id;
         }
+
         public void setInstant(Long instant) {
             this.instant = Instant.ofEpochMilli(instant);
         }
-        public void setUserId(String userId) { 
+
+        public void setUserId(String userId) {
             this.userId = userId;
         }
+
         public void setMessageUrl(String messageUrl) {
             this.messageUrl = messageUrl;
         }
+
         public void setMessage(String message) {
             this.message = message;
         }
