@@ -65,11 +65,14 @@ public class MentionHandler extends ListenerAdapter {
         if (silencedUsers.contains(event.getUser().getId())) return;
 
         PrivateChannel pc = event.getMember().getUser().openPrivateChannel().complete();
-        pendingMentions.get(event.getMember().getId()).forEach(pm -> {
-            pc.sendMessage(String.format("Your were mentioned while offline: %s", pm.getMessageUrl())).complete();
+        String message = "You were mentioned while offline:\n";
+        pc.sendMessage("Your were mentioned while offline:");
+        for (PendingMention pm : pendingMentions.get(event.getMember().getId())) {
+            message += String.format("* %s\n", pm.getMessageUrl());
             getCollection().deleteOne(eq("_id", pm.getId()));
-        });
-        pc.sendMessage("If you would like to stop receving mention notifications, just reply with !toggleMentions");
+        }
+        message += "If you would like to stop receving mention notifications, just reply with !toggleMentions";
+        pc.sendMessage(message).complete();
         pendingMentions.remove(event.getMember().getId());
     }
 
