@@ -92,7 +92,7 @@ public class RemindMe extends CommandHandler {
             if (rt.matches(message)) {
                 if (rt.isHelperCommand()) {
                     rt.handleComamnd(event);
-                    continue;
+                    return;
                 }
                 Reminder reminder = rt.getReminder(event.getMessage().getContentRaw());
                 schedule(save(reminder, event.getAuthor(), event.getMessage().getJumpUrl()));
