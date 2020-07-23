@@ -1,16 +1,13 @@
 package net.mikej.bots.tricksy.reddit;
 
-import java.awt.Color;
-
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
+import org.reflections.Reflections;
 
 import net.dean.jraw.RedditClient;
 import net.dean.jraw.http.OkHttpNetworkAdapter;
@@ -20,109 +17,93 @@ import net.dean.jraw.models.SubredditSort;
 import net.dean.jraw.oauth.Credentials;
 import net.dean.jraw.oauth.OAuthHelper;
 import net.dean.jraw.pagination.DefaultPaginator;
-import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.TextChannel;
-import net.mikej.bots.tricksy.discord.DiscordClient;
-import net.mikej.bots.tricksy.discord.handlers.internal.PaginatableImageHandler;
-import net.mikej.bots.tricksy.services.ImageService;
 
-public class RedditBot implements Runnable {
-    private List<String> seenPosts = new ArrayList<>();
-    private List<TextChannel> penSwapChannels;
-    private RedditClient _client;
-    private final Pattern urlPattern = Pattern.compile("(?:\\(|\\b)(http[^\\)\\s]+)(?:\\)|\\b)");
-    private final LinkedHashMap<String, String> highlightColors = new LinkedHashMap<String, String>() {
-        private static final long serialVersionUID = 6629892383458502076L;
-
-        {
-            put("WTS-OPEN", "#00ff00");
-            put("WTT-OPEN", "#e403f2");
-            put("WTB-OPEN", "#ffc0cb");
-            put("OPEN - Reduced!", "#82cafa");
-            put("GIVEAWAY", "#ffb000");
-        }
-    };
+public class RedditBot {
+    private static RedditClient _client;
 
     public RedditBot(String username, String password, String clientId, String clientSecret) {
         Credentials oauthCreds = Credentials.script(username, password, clientId, clientSecret);
         UserAgent userAgent = new UserAgent("bot", "net.mikej.bots.tricksy", "1.0.0", "thisisverytricky");
         _client = OAuthHelper.automatic(new OkHttpNetworkAdapter(userAgent), oauthCreds);
-
-        if (DiscordClient.getClient() != null)
-            penSwapChannels = DiscordClient.getClient().getTextChannelsByName("pen-swap", true);
-        else penSwapChannels = new ArrayList<>();
-
-        init();
-        ScheduledExecutorService schedular = Executors.newScheduledThreadPool(1);
-        schedular.scheduleAtFixedRate(this, 0, 2, TimeUnit.SECONDS);
     }
 
     public static RedditBot init(String username, String password, String clientId, String clientSecret) {
         return new RedditBot(username, password, clientId, clientSecret);
     }
 
-    private void init() {
-        DefaultPaginator<Submission> newPosts = getNewPosts();
-        for (Submission post : newPosts.next()) {
-            seenPosts.add(post.getFullName());
-        }
+    public static void watchNewPosts(String subreddit) throws InstantiationException, IllegalAccessException {
+        NewPostWatcher.init(subreddit, _client);
     }
 
-    public DefaultPaginator<Submission> getNewPosts() {
-        return _client.subreddit("pen_swap").posts().sorting(SubredditSort.NEW).limit(100).build();
-    }
+    public static class NewPostWatcher implements Runnable {
 
-    @Override
-    public void run() {
-        try {
-            for (Submission post : getNewPosts().next()) {
-                if (seenPosts.contains(post.getFullName())) continue;
-                seenPosts.add(post.getFullName());
-
-                final EmbedBuilder eb = getEmbed(post);
-                final List<String> images = getImages(post.getSelfText());
-                if (images.size() > 0) eb.setImage(images.get(0));
-                penSwapChannels.forEach(chan -> {
-                    chan.sendMessage(eb.build()).queue(msg -> {
-                        if (images.size() > 1) {
-                            PaginatableImageHandler.registerPagableMessage(eb, msg, images);
-                        }
-                    });
-                });
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    public List<String> getImages(String text) {
-        List<String> imageUrls = new ArrayList<>();
-
-        List<String> urls = new ArrayList<>();
-        Matcher matcher = urlPattern.matcher(text);
-        while (matcher.find()) {
-            urls.add(matcher.group(1));
-        }
-
-        urls.forEach(url -> {
+        @Override
+        public void run() {
             try {
-                imageUrls.addAll(ImageService.getImages(url));
-            } catch (IOException e) {
-                e.printStackTrace();
+                for (Submission post : getNewPosts(subreddit).next()) {
+                    if (seenPosts.contains(post.getFullName())) continue;
+                    seenPosts.add(post.getFullName());
+                    onNewPost(post);
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
             }
-        });
+        }
 
-        return imageUrls;
-    }
+        private String subreddit;
+        private RedditClient _client;
+        private List<String> seenPosts = new ArrayList<>();
+        private List<PostHandler> postHandlers = new ArrayList<>();
 
-    public EmbedBuilder getEmbed(Submission post) {
-        EmbedBuilder eb = new EmbedBuilder();
+        private NewPostWatcher(String subreddit, RedditClient client) {
+            this.subreddit = subreddit;
+            this._client = client;
 
-        eb.setAuthor(String.format("%s - %s", post.getAuthor(), post.getAuthorFlairText()));
-        eb.setTitle(post.getTitle(), post.getUrl());
-        if (highlightColors.containsKey(post.getLinkFlairText()))
-            eb.setColor(Color.decode(highlightColors.get(post.getLinkFlairText())));
+            for (Submission post : getNewPosts(subreddit).next()) {
+                seenPosts.add(post.getFullName());
+            }
+        }
 
-        return eb;
+        public static void init(String subreddit, RedditClient client)
+                throws InstantiationException, IllegalAccessException {
+            NewPostWatcher watcher = new NewPostWatcher(subreddit, client);
+
+            Reflections reflections = new Reflections("net.mikej.bots.tricksy.reddit.handlers");
+            Set<Class<? extends PostHandler>> classes = reflections.getSubTypesOf(PostHandler.class);
+
+            for (Class<? extends PostHandler> adpt : classes) {
+                PostHandler adapter = adpt.newInstance();
+                if (!adapter.handlesSubreddit(subreddit)) continue;
+                adapter.init();
+                watcher.addPostHandler(adapter);
+            }
+            
+            if (!watcher.hasHandlers()) return;
+
+            ScheduledExecutorService schedular = Executors.newScheduledThreadPool(1);
+            schedular.scheduleAtFixedRate(watcher, 0, 2, TimeUnit.SECONDS);
+        }
+
+        private DefaultPaginator<Submission> getNewPosts(String subreddit) {
+            return _client.subreddit(subreddit).posts().sorting(SubredditSort.NEW).limit(100).build();
+        }
+
+        private void onNewPost(Submission post) {
+            for (PostHandler handler : postHandlers)
+                try { handler.handlePost(post); } catch (Exception ex) { ex.printStackTrace(); }
+        }
+
+        public String getSubreddit() { return subreddit; }
+
+        public void addPostHandler(PostHandler handler) {
+            postHandlers.add(handler);
+        }
+
+        public void removePostHandler(PostHandler handler) {
+            if (postHandlers.contains(handler))
+                postHandlers.remove(handler);
+        }
+
+        public boolean hasHandlers() { return postHandlers.size() > 0; }
     }
 }
