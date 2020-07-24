@@ -13,20 +13,19 @@ import net.mikej.bots.tricksy.reddit.RedditBot;
  *
  */
 public class BeepBoopMotherfucker {
-    public static void main(String[] args) throws LoginException, InstantiationException, IllegalAccessException {
+    public static void main(String[] args)
+            throws LoginException, InstantiationException, IllegalAccessException, InterruptedException {
         ImgurContainer.init(System.getenv("imgur_token"));
-        MongoContainer.init(
-                String.format("mongodb+srv://%s:%s@cluster-inky-bot-yiios.mongodb.net/%s?retryWrites=true&w=majority&readPreference=primaryPreferred",
-                    System.getenv("mongodb_username"),
-                    System.getenv("mongodb_password"),
-                    System.getenv("mongodb_collection")));
+        MongoContainer.init(String.format(
+                "mongodb+srv://%s:%s@cluster-inky-bot-yiios.mongodb.net/%s?retryWrites=true&w=majority&readPreference=primaryPreferred",
+                System.getenv("mongodb_username"), System.getenv("mongodb_password"),
+                System.getenv("mongodb_collection")));
+
         DiscordClient.init(System.getenv("discord_token"), Activity.watching("Every Word You Say"));
-        try {
-            DiscordClient.getClient().awaitReady();
-            RedditBot.init(System.getenv("reddit_username"), System.getenv("reddit_password"), System.getenv("reddit_client_id"), System.getenv("reddit_client_secret"));
-            RedditBot.watchNewPosts("pen_swap");
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        DiscordClient.getClient().awaitReady();
+
+        RedditBot.init(System.getenv("reddit_username"), System.getenv("reddit_password"),
+                System.getenv("reddit_client_id"), System.getenv("reddit_client_secret"));
+        RedditBot.watchNewPosts("pen_swap");
     }
 }
