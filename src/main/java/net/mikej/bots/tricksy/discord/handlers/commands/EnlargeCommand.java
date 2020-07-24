@@ -3,6 +3,7 @@ package net.mikej.bots.tricksy.discord.handlers.commands;
 import java.util.List;
 
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Emote;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.mikej.bots.tricksy.discord.handlers.CommandHandler;
@@ -19,6 +20,14 @@ public class EnlargeCommand extends CommandHandler {
            String avatar = member.getUser().getAvatarUrl();
            EmbedBuilder eb = new EmbedBuilder();
            eb.setImage(avatar);
+           event.getChannel().sendMessage(eb.build()).complete();
+       }
+
+       List<Emote> emotes = event.getMessage().getEmotes();
+       for (Emote emote : emotes) {
+           String emoteUrl = emote.getImageUrl();
+           EmbedBuilder eb = new EmbedBuilder();
+           eb.setImage(emoteUrl);
            event.getChannel().sendMessage(eb.build()).complete();
        }
     }
