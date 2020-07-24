@@ -30,7 +30,6 @@ public class EnlargeCommand extends CommandHandler {
            eb.setImage(emoteUrl);
            event.getChannel().sendMessage(eb.build()).queue();
        }
-
        event.getMessage().delete().queue();
     }
 

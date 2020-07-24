@@ -24,9 +24,15 @@
     <okhttp.version>4.8.0</okhttp.version>
     <retrofit.jackson.version>2.9.0</retrofit.jackson.version>
     <joda.version>2.10.6</joda.version>
+    <org.json.version>20200518</org.json.version>
   </properties>
 
   <dependencies>
+    <dependency>
+      <groupId>org.json</groupId>
+      <artifactId>json</artifactId>
+      <version>${org.json.version}</version>
+    </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>

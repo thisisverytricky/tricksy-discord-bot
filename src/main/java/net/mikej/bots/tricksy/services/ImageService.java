@@ -14,8 +14,8 @@ public class ImageService {
         if (image.matches(".+\\.(?:jpg|gif|png)"))
             return Arrays.asList(new String[] { image });
         else if (image.toLowerCase().contains("imgur"))
-            return getImgurImage(image);
-        return Arrays.asList(new String[] { image });
+            return getImgurImage(image).stream().filter(i -> i.matches(".+\\.(?:jpg|gif|png)")).collect(Collectors.toList());
+        return new ArrayList<String>();
     }
 
     private static List<String> getImgurImage(String image) throws IOException {

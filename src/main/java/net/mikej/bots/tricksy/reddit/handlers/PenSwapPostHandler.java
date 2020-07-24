@@ -63,6 +63,9 @@ public class PenSwapPostHandler extends PostHandler {
     public EmbedBuilder getEmbed(Submission post) {
         EmbedBuilder eb = new EmbedBuilder();
 
+        String trades = post.getAuthorFlairText();
+        if (trades == null) trades = "Trades: 0";
+
         eb.setAuthor(String.format("%s - %s", post.getAuthor(), post.getAuthorFlairText()));
         eb.setTitle(post.getTitle(), post.getUrl());
         if (highlightColors.containsKey(post.getLinkFlairText()))
