@@ -62,11 +62,10 @@ public class InkLookupCommand extends CommandHandler {
                     eb.setDescription(String.format("[Read Review](%s)", ink.getReviewLink()));
                 eb.setTitle(ink.getFullName(), ink.getPrimaryImage());
 
-                event.getChannel().sendMessage(eb.build()).queue(message -> {
-                    if (inkUrls.size() > 1)
-                        PaginatableImageHandler.registerPagableMessage(eb, message, inkUrls);
-                });
-
+                if (inkUrls.size() > 1)
+                    PaginatableImageHandler.registerPagableMessage(eb, event.getChannel(), inkUrls);
+                else
+                    event.getChannel().sendMessage(eb.build()).queue();
             } catch (Exception ex) {
 
             }

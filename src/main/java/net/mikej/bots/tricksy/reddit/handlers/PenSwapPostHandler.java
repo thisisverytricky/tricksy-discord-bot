@@ -45,11 +45,11 @@ public class PenSwapPostHandler extends PostHandler {
         final List<String> images = getImages(post.getSelfText());
         if (images.size() > 0) eb.setImage(images.get(0));
         penSwapChannels.forEach(chan -> {
-            chan.sendMessage(eb.build()).queue(msg -> {
-                if (images.size() > 1) {
-                    PaginatableImageHandler.registerPagableMessage(eb, msg, images);
-                }
-            });
+            if (images.size() > 1) {
+                PaginatableImageHandler.registerPagableMessage(eb, chan, images);
+            } else {
+                chan.sendMessage(eb.build()).queue();
+            }
         });
     }
 

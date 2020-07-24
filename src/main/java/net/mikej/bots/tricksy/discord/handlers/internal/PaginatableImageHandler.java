@@ -12,6 +12,7 @@ import org.bson.types.ObjectId;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -63,13 +64,16 @@ public class PaginatableImageHandler extends ListenerAdapter {
         });
     }
 
-    public static void registerPagableMessage(EmbedBuilder embedBuilder, Message message, List<String> images) {
-        PagableImage pi = new PagableImage(embedBuilder, message, images);
-        trackedMessages.put(message.getId(), pi);
-        message.addReaction(previousArrow).queue();
-        message.addReaction(nextArrow).queue();
-
-        getCollection().insertOne(pi);
+    public static void registerPagableMessage(EmbedBuilder embedBuilder, MessageChannel channel, List<String> images) {
+        embedBuilder.setFooter(String.format("%s of %s images", 1, images.size()));
+        channel.sendMessage(embedBuilder.build()).queue(message -> {
+            PagableImage pi = new PagableImage(message, images);
+            trackedMessages.put(message.getId(), pi);
+            message.addReaction(previousArrow).queue();
+            message.addReaction(nextArrow).queue();
+    
+            getCollection().insertOne(pi);
+        });
     }
 
     private static MongoCollection<PagableImage> getCollection() {
@@ -83,10 +87,6 @@ public class PaginatableImageHandler extends ListenerAdapter {
         @BsonId
         private ObjectId id;
         private int index;
-        @BsonIgnore
-        private EmbedBuilder embedBuilder;
-        @BsonIgnore
-        private Message message;
         private String messageId;
         private String channelId;
         private String guildId;
@@ -95,10 +95,8 @@ public class PaginatableImageHandler extends ListenerAdapter {
         public PagableImage() {
         }
 
-        public PagableImage(EmbedBuilder embedBuilder, Message message, List<String> images) {
+        public PagableImage(Message message, List<String> images) {
             this.index = 0;
-            this.embedBuilder = embedBuilder;
-            this.message = message;
             this.images = images;
             this.messageId = message.getId();
             this.channelId = message.getChannel().getId();
@@ -111,16 +109,6 @@ public class PaginatableImageHandler extends ListenerAdapter {
 
         public int getIndex() {
             return index;
-        }
-
-        @BsonIgnore
-        public EmbedBuilder getEmbedBuilder() {
-            return embedBuilder;
-        }
-
-        @BsonIgnore
-        public Message getMessage() {
-            return message;
         }
 
         public String getMessageId() {
@@ -150,14 +138,6 @@ public class PaginatableImageHandler extends ListenerAdapter {
 
         public void setIndex(int index) {
             this.index = index;
-        }
-
-        public void setEmbedBuilder(EmbedBuilder embedBuilder) {
-            this.embedBuilder = embedBuilder;
-        }
-
-        public void setMessage(Message message) {
-            this.message = message;
         }
 
         public void setMessageId(String messageId) {
