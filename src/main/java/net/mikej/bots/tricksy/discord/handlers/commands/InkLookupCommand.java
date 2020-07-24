@@ -51,8 +51,10 @@ public class InkLookupCommand extends CommandHandler {
                     });
                 }
 
-                if (inkUrls.size() == 0)
+                if (inkUrls.size() == 0) {
+                    event.getChannel().sendMessage(ink.getPrimaryImage()).queue();
                     continue;
+                }
 
                 final EmbedBuilder eb = new EmbedBuilder();
                 eb.setImage(inkUrls.get(0));
