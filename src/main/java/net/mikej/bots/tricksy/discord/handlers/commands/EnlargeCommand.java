@@ -20,7 +20,7 @@ public class EnlargeCommand extends CommandHandler {
            String avatar = member.getUser().getAvatarUrl();
            EmbedBuilder eb = new EmbedBuilder();
            eb.setImage(avatar);
-           event.getChannel().sendMessage(eb.build()).complete();
+           event.getChannel().sendMessage(eb.build()).queue();
        }
 
        List<Emote> emotes = event.getMessage().getEmotes();
@@ -28,8 +28,10 @@ public class EnlargeCommand extends CommandHandler {
            String emoteUrl = emote.getImageUrl();
            EmbedBuilder eb = new EmbedBuilder();
            eb.setImage(emoteUrl);
-           event.getChannel().sendMessage(eb.build()).complete();
+           event.getChannel().sendMessage(eb.build()).queue();
        }
+
+       event.getMessage().delete().queue();
     }
 
     @Override
