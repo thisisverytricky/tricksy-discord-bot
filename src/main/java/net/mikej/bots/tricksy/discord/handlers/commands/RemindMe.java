@@ -6,7 +6,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import com.mongodb.client.MongoCollection;
 
@@ -29,6 +31,7 @@ import static com.mongodb.client.model.Filters.*;
 public class RemindMe extends CommandHandler {
 
     private List<ReminderThreshold> reminderThresholds = new ArrayList<>();
+    private static List<ReminderSaved> scheduledReminders = new ArrayList<>();
 
     public RemindMe() throws InstantiationException, IllegalAccessException {
         Reflections reflections = new Reflections("net.mikej.bots.tricksy.discord.handlers.commands.thresholds");
@@ -49,14 +52,22 @@ public class RemindMe extends CommandHandler {
         }
     }
 
+    public static synchronized void removeScheduledReminder(ReminderSaved savedReminder) {
+        scheduledReminders.stream().filter(sr -> sr.get_id().equals(savedReminder.get_id())).forEach(sv -> {
+            sv.getScheduledFuture().cancel(true);
+        });
+        scheduledReminders = scheduledReminders.stream().filter(sr -> sr.get_id().equals(savedReminder.get_id())).collect(Collectors.toList());
+    }
+
     private void schedule(ReminderSaved reminder) {
+        scheduledReminders.add(reminder);
         ScheduledExecutorService service = Executors.newScheduledThreadPool(1);
 
         final String message = reminder.getMessage();
         final String messageUrl = reminder.getMessageUrl();
         final User user = DiscordClient.getClient().getUserById(reminder.getUserId());
 
-        service.schedule(new Runnable() {
+        reminder.setScheduledFuture(service.schedule(new Runnable() {
 
             @Override
             public void run() {
@@ -69,7 +80,7 @@ public class RemindMe extends CommandHandler {
                     getCollection().findOneAndDelete(eq("messageUrl", messageUrl));
                 });
             }
-        }, Seconds.secondsBetween(Instant.now(), reminder.instant()).getSeconds(), TimeUnit.SECONDS);
+        }, Seconds.secondsBetween(Instant.now(), reminder.instant()).getSeconds(), TimeUnit.SECONDS));
     }
 
     private ReminderSaved save(Reminder reminder, User user, String messageUrl) {
@@ -175,6 +186,8 @@ public class RemindMe extends CommandHandler {
         public String userId;
         private String messageUrl;
         private String message;
+        @BsonIgnore
+        private ScheduledFuture<?> scheduledFuture;
 
         public ReminderSaved() {
         }
@@ -209,6 +222,15 @@ public class RemindMe extends CommandHandler {
         @BsonIgnore
         public Instant instant() {
             return instant;
+        }
+
+        @BsonIgnore
+        public ScheduledFuture<?> getScheduledFuture() {
+            return scheduledFuture;
+        }
+
+        public void setScheduledFuture(ScheduledFuture<?> sf) {
+            this.scheduledFuture = sf;
         }
 
         public void set_id(ObjectId _id) {
