@@ -21,7 +21,7 @@ public class BeepBoopMotherfucker {
                 System.getenv("mongodb_username"), System.getenv("mongodb_password"),
                 System.getenv("mongodb_collection")));
 
-        DiscordClient.init(System.getenv("discord_token"), Activity.watching("Every Word You Say"));
+        DiscordClient.init(System.getenv("discord_token"), Activity.watching("type !help"));
         DiscordClient.getClient().awaitReady();
 
         RedditBot.init(System.getenv("reddit_username"), System.getenv("reddit_password"),
